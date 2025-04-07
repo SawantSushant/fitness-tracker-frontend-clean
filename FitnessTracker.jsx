@@ -11,20 +11,22 @@ export default function FitnessTracker() {
   const [loggedInUser, setLoggedInUser] = useState(null);
 
   const [workout, setWorkout] = useState('');
-  const [workouts, setWorkouts] = useState([]); // ✅ initialized safely
+  const [workouts, setWorkouts] = useState([]); // always an array
 
   const handleLogin = async () => {
     if (username && password) {
+      console.log("🔐 Logging in as:", username);
       setLoggedInUser(username);
+
       try {
         const res = await fetch(`${API_BASE}/workouts?user=${username}`);
         const data = await res.json();
-        console.log("📦 Fetched workouts:", data);
+        console.log("📦 Fetched workouts after login:", data);
 
         if (Array.isArray(data)) {
           setWorkouts(data);
         } else {
-          console.warn("Unexpected response format:", data);
+          console.warn("⚠️ Unexpected response format:", data);
           setWorkouts([]);
         }
       } catch (err) {
@@ -70,14 +72,28 @@ export default function FitnessTracker() {
         <Card className="max-w-md w-full">
           <CardContent>
             <h1 className="text-2xl font-bold text-center mb-4">Login</h1>
-            <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username" />
-            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className="mt-2" />
-            <Button onClick={handleLogin} className="w-full mt-4">Sign In</Button>
+            <Input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Username"
+            />
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              className="mt-2"
+            />
+            <Button onClick={handleLogin} className="w-full mt-4">
+              Sign In
+            </Button>
           </CardContent>
         </Card>
       </div>
     );
   }
+
+  console.log("🧪 Current workouts in render:", workouts); // extra debug
 
   return (
     <div className="p-4 space-y-4">
@@ -94,24 +110,49 @@ export default function FitnessTracker() {
 
       <div>
         <h2 className="text-xl font-semibold mb-2">Your Workouts</h2>
+
+        {/* If workouts is empty or not an array */}
         {!Array.isArray(workouts) || workouts.length === 0 ? (
           <p className="text-gray-500">No workouts logged yet.</p>
         ) : (
           <ul className="space-y-2">
-            {workouts.map((item, index) => (
-              <li key={index} className="bg-white shadow p-4 rounded-xl">
-                <div className="font-semibold text-lg">{item.workout}</div>
-                {item.duration && <p>🕒 Duration: {item.duration} min</p>}
-                {item.calories && <p>🔥 Calories: {item.calories}</p>}
-                {item.feedback && <p>💬 Feedback: {item.feedback}</p>}
-                {item.date && <p>📅 Date: {item.date}</p>}
-              </li>
-            ))}
+            {workouts.map((item, index) => {
+              console.log("📍 Rendering item:", item);
+
+              // If item is not an object, or is null, safely print as JSON
+              if (typeof item !== 'object' || item === null) {
+                return (
+                  <li key={index} className="bg-white shadow p-4 rounded-xl text-red-600">
+                    Invalid workout entry: {JSON.stringify(item)}
+                  </li>
+                );
+              }
+
+              // If item.workout is an object, fallback to JSON
+              let displayWorkout = item.workout;
+              if (typeof displayWorkout === 'object' && displayWorkout !== null) {
+                displayWorkout = JSON.stringify(displayWorkout);
+              }
+
+              return (
+                <li key={index} className="bg-white shadow p-4 rounded-xl">
+                  <div className="font-semibold text-lg">
+                    {displayWorkout || "No workout title"}
+                  </div>
+                  {item.duration && <p>🕒 Duration: {item.duration} min</p>}
+                  {item.calories && <p>🔥 Calories: {item.calories}</p>}
+                  {item.feedback && <p>💬 Feedback: {item.feedback}</p>}
+                  {item.date && <p>📅 Date: {item.date}</p>}
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
 
-      <Button onClick={handleExportCSV} className="mt-4">Export to CSV</Button>
+      <Button onClick={handleExportCSV} className="mt-4">
+        Export to CSV
+      </Button>
     </div>
   );
 }
