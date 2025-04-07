@@ -1,7 +1,7 @@
 import React from 'react';
-import './index.css';
 import { createRoot } from 'react-dom/client';
+import './index.css'; // <-- Import the file with @tailwind directives
+
 import FitnessTracker from './FitnessTracker.jsx';
 
-const root = createRoot(document.getElementById('root'));
-root.render(<FitnessTracker />);
+createRoot(document.getElementById('root')).render(<FitnessTracker />);

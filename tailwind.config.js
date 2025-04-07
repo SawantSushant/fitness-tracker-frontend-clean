@@ -1,8 +1,7 @@
 module.exports = {
   content: [
-    "./index.html",           // if present at root
-    "./src/**/*.{js,jsx}",    // if your React code is in /src
-    "./components/**/*.{js,jsx}",
+    "./index.html",
+    "./src/**/*.{js,jsx,ts,tsx}", // or wherever your .jsx files live
   ],
   theme: {
     extend: {},
