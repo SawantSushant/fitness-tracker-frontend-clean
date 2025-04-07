@@ -11,7 +11,7 @@ export default function FitnessTracker() {
   const [loggedInUser, setLoggedInUser] = useState(null);
 
   const [workout, setWorkout] = useState('');
-  const [workouts, setWorkouts] = useState([]); // ✅ Ensure it's always an array
+  const [workouts, setWorkouts] = useState([]); // ✅ Always initialized as an array
 
   const handleLogin = async () => {
     if (username && password) {
@@ -46,7 +46,7 @@ export default function FitnessTracker() {
         body: JSON.stringify({ user: loggedInUser, workout }),
       });
       setWorkout('');
-      handleLogin(); // 🔄 Refresh workouts after logging one
+      handleLogin(); // Refresh workouts after logging one
     } catch (err) {
       console.error("❌ Error adding workout:", err);
     }
@@ -93,19 +93,11 @@ export default function FitnessTracker() {
           <ul className="space-y-2">
             {workouts.map((item, index) => (
               <li key={index} className="bg-white shadow p-4 rounded-xl">
-                {typeof item === 'string' ? (
-                  item
-                ) : item.workout ? (
-                  <div>
-                    <strong>{item.workout}</strong>
-                    {item.duration && <p>Duration: {item.duration} min</p>}
-                    {item.calories && <p>Calories: {item.calories}</p>}
-                    {item.date && <p>Date: {item.date}</p>}
-                    {item.feedback && <p>Feedback: {item.feedback}</p>}
-                  </div>
-                ) : (
-                  JSON.stringify(item)
-                )}
+                <div className="font-semibold text-lg">{item.workout}</div>
+                {item.duration && <p>🕒 Duration: {item.duration} mins</p>}
+                {item.calories && <p>🔥 Calories: {item.calories}</p>}
+                {item.feedback && <p>💬 Feedback: {item.feedback}</p>}
+                {item.date && <p>📅 Date: {item.date}</p>}
               </li>
             ))}
           </ul>
