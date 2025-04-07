@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "./components/ui/card";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
@@ -16,32 +16,27 @@ export default function FitnessTracker() {
   const handleLogin = () => {
     if (username && password) {
       setLoggedInUser(username);
-      console.log("User logged in:", username);
+      console.log("🔐 Logged in as:", username);
       fetchWorkouts(username);
-    } else {
-      console.warn("Username and password required to log in");
     }
   };
 
   const fetchWorkouts = async (user) => {
     try {
-      console.log("Fetching workouts for:", user);
       const res = await fetch(`${API_BASE}/workouts?user=${user}`);
       const data = await res.json();
-      console.log("Fetched workouts:", data);
+      console.log("📦 Workouts from backend:", data);
       setWorkouts(data);
-    } catch (error) {
-      console.error("Error fetching workouts:", error);
+    } catch (err) {
+      console.error("❌ Failed to fetch workouts:", err);
     }
   };
 
   const handleAddWorkout = async () => {
     if (!workout || !loggedInUser) {
-      console.warn("Workout or user missing");
+      console.warn("⚠️ Workout or user missing");
       return;
     }
-
-    console.log("Sending workout:", workout, "for user:", loggedInUser);
 
     try {
       await fetch(`${API_BASE}/workouts`, {
@@ -49,11 +44,10 @@ export default function FitnessTracker() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user: loggedInUser, workout }),
       });
-
       setWorkout('');
       fetchWorkouts(loggedInUser);
-    } catch (error) {
-      console.error("Error sending workout:", error);
+    } catch (err) {
+      console.error("❌ Error adding workout:", err);
     }
   };
 
@@ -88,12 +82,27 @@ export default function FitnessTracker() {
 
       <div>
         <h2 className="text-xl font-semibold mb-2">Your Workouts</h2>
-        {workouts.length === 0 ? (
+
+        {!Array.isArray(workouts) || workouts.length === 0 ? (
           <p className="text-gray-500">No workouts logged yet.</p>
         ) : (
           <ul className="space-y-2">
             {workouts.map((item, index) => (
-              <li key={index} className="bg-white shadow p-4 rounded-xl">{item}</li>
+              <li key={index} className="bg-white shadow p-4 rounded-xl">
+                {typeof item === 'string' ? (
+                  item
+                ) : item.workout ? (
+                  <div>
+                    <strong>{item.workout}</strong>
+                    {item.duration && <p>Duration: {item.duration} min</p>}
+                    {item.calories && <p>Calories: {item.calories}</p>}
+                    {item.date && <p>Date: {item.date}</p>}
+                    {item.feedback && <p>Feedback: {item.feedback}</p>}
+                  </div>
+                ) : (
+                  JSON.stringify(item)
+                )}
+              </li>
             ))}
           </ul>
         )}
