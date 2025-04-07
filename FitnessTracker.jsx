@@ -1,13 +1,7 @@
 import React, { useState } from 'react';
 
-/**
- *  Make sure you have Tailwind set up.
- *  If you previously used Card, Button, Input from custom components,
- *  either re-add them or swap them out for these Tailwind classes below.
- */
-
-// The bulletproof approach to ensure no "Minified React error #31":
-// - We only render strings or safely JSON.stringify objects.
+// This version uses "Enter" to submit the login form
+// and ensures the login button is clickable.
 
 const API_BASE = 'https://fitness-tracker-hgt2.onrender.com/api';
 
@@ -17,13 +11,17 @@ export default function FitnessTracker() {
   const [password, setPassword] = useState('');
   const [loggedInUser, setLoggedInUser] = useState(null);
 
-  const [workout, setWorkout] = useState('');      // the text input for "workout" name
-  const [workouts, setWorkouts] = useState([]);    // safely an array
+  const [workout, setWorkout] = useState('');
+  const [workouts, setWorkouts] = useState([]);
 
   // ----------- FUNCTIONS -----------
 
-  // 1) Login handler
-  const handleLogin = async () => {
+  // 1) handleLogin is now used by the form "onSubmit"
+  const handleLogin = async (e) => {
+    if (e) {
+      e.preventDefault(); // prevent page reload on form submit
+    }
+
     if (username && password) {
       console.log("🔐 Logging in as:", username);
       setLoggedInUser(username);
@@ -50,14 +48,13 @@ export default function FitnessTracker() {
   const handleAddWorkout = async () => {
     if (!workout || !loggedInUser) return;
 
-    // We incorporate all fields the user wants:
     const newWorkout = {
       user: loggedInUser,
-      workout: workout,
+      workout,
       duration: 30,
       calories: 250,
       feedback: "Felt good!",
-      date: new Date().toISOString().split('T')[0], // e.g. '2025-04-07'
+      date: new Date().toISOString().split('T')[0],
     };
 
     try {
@@ -66,9 +63,8 @@ export default function FitnessTracker() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newWorkout),
       });
-      setWorkout('');  // clear input
-
-      // Refresh workouts so user sees updates
+      setWorkout('');
+      // refresh workouts
       handleLogin();
     } catch (err) {
       console.error("❌ Error adding workout:", err);
@@ -87,39 +83,44 @@ export default function FitnessTracker() {
     setWorkouts([]);
   };
 
-  // ----------- RENDER STARTS HERE -----------
+  // ----------- RENDER -----------
 
-  // If user is NOT logged in: show login screen
+  // If user is NOT logged in: show login form
   if (!loggedInUser) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-400 p-4">
         <div className="w-full max-w-sm bg-white rounded-xl shadow-md p-6">
           <h1 className="text-2xl font-bold text-center mb-4">Login</h1>
-          <input
-            className="w-full px-3 py-2 border border-gray-300 rounded mb-2"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Username"
-          />
-          <input
-            className="w-full px-3 py-2 border border-gray-300 rounded mb-4"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-          />
-          <button
-            onClick={handleLogin}
-            className="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 transition"
-          >
-            Sign In
-          </button>
+          {/*
+             We use <form> with onSubmit so the Enter key triggers handleLogin.
+           */}
+          <form onSubmit={handleLogin} className="space-y-4">
+            <input
+              className="w-full px-3 py-2 border border-gray-300 rounded"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Username"
+            />
+            <input
+              className="w-full px-3 py-2 border border-gray-300 rounded"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+            />
+
+            <button
+              type="submit"
+              className="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 transition"
+            >
+              Sign In
+            </button>
+          </form>
         </div>
       </div>
     );
   }
 
-  // If user IS logged in: main dashboard
   console.log("🧪 Current workouts in render:", workouts);
 
   return (
@@ -177,33 +178,44 @@ export default function FitnessTracker() {
               {workouts.map((item, index) => {
                 console.log("📍 Rendering item =>", item);
 
-                // Guarantee no crash: convert entire item to string
-                // if we suspect an object in 'item.workout'
-                const itemString = JSON.stringify(item);
+                // We'll do a fallback: JSON if something is an object
+                let displayWorkout = item.workout;
+                if (typeof displayWorkout === 'object' && displayWorkout !== null) {
+                  displayWorkout = JSON.stringify(displayWorkout);
+                }
 
                 return (
-                  <div key={index} className="border border-gray-200 rounded-xl p-4 space-y-2">
-                    {/*
-                      For a more structured display:
-                      We'll try to parse each field. If 'workout' is an object, we'll string it.
-                    */}
+                  <div
+                    key={index}
+                    className="border border-gray-200 rounded-xl p-4 space-y-2"
+                  >
                     <div className="font-bold text-lg">
-                      Workout: {typeof item.workout === 'object'
-                        ? JSON.stringify(item.workout)
-                        : item.workout
-                      }
+                      Workout: {displayWorkout || 'No workout title'}
                     </div>
-
-                    <p><span className="font-semibold">User:</span> {item.user || 'N/A'}</p>
-                    <p><span className="font-semibold">Duration:</span> {item.duration || 'N/A'} min</p>
-                    <p><span className="font-semibold">Calories:</span> {item.calories || 'N/A'}</p>
-                    <p><span className="font-semibold">Feedback:</span> {item.feedback || 'N/A'}</p>
-                    <p><span className="font-semibold">Date:</span> {item.date || 'N/A'}</p>
-
-                    {/* If you REALLY want to be safe, show entire object as JSON for debugging */}
+                    <p>
+                      <span className="font-semibold">User:</span>{" "}
+                      {item.user || 'N/A'}
+                    </p>
+                    <p>
+                      <span className="font-semibold">Duration:</span>{" "}
+                      {item.duration || 'N/A'} min
+                    </p>
+                    <p>
+                      <span className="font-semibold">Calories:</span>{" "}
+                      {item.calories || 'N/A'}
+                    </p>
+                    <p>
+                      <span className="font-semibold">Feedback:</span>{" "}
+                      {item.feedback || 'N/A'}
+                    </p>
+                    <p>
+                      <span className="font-semibold">Date:</span>{" "}
+                      {item.date || 'N/A'}
+                    </p>
+                    {/* For debugging, show entire object */}
                     <hr />
                     <pre className="text-xs bg-gray-50 p-2 rounded">
-                      {itemString}
+                      {JSON.stringify(item, null, 2)}
                     </pre>
                   </div>
                 );
