@@ -93,7 +93,7 @@ export default function FitnessTracker() {
     );
   }
 
-  console.log("🧪 Current workouts in render:", workouts); // extra debug
+  console.log("🧪 Current workouts in render:", workouts);
 
   return (
     <div className="p-4 space-y-4">
@@ -117,32 +117,11 @@ export default function FitnessTracker() {
         ) : (
           <ul className="space-y-2">
             {workouts.map((item, index) => {
-              console.log("📍 Rendering item:", item);
-
-              // If item is not an object, or is null, safely print as JSON
-              if (typeof item !== 'object' || item === null) {
-                return (
-                  <li key={index} className="bg-white shadow p-4 rounded-xl text-red-600">
-                    Invalid workout entry: {JSON.stringify(item)}
-                  </li>
-                );
-              }
-
-              // If item.workout is an object, fallback to JSON
-              let displayWorkout = item.workout;
-              if (typeof displayWorkout === 'object' && displayWorkout !== null) {
-                displayWorkout = JSON.stringify(displayWorkout);
-              }
-
+              console.log("📍 Rendering item =>", item);
+              // Render the entire object as a JSON string
               return (
                 <li key={index} className="bg-white shadow p-4 rounded-xl">
-                  <div className="font-semibold text-lg">
-                    {displayWorkout || "No workout title"}
-                  </div>
-                  {item.duration && <p>🕒 Duration: {item.duration} min</p>}
-                  {item.calories && <p>🔥 Calories: {item.calories}</p>}
-                  {item.feedback && <p>💬 Feedback: {item.feedback}</p>}
-                  {item.date && <p>📅 Date: {item.date}</p>}
+                  {JSON.stringify(item)}
                 </li>
               );
             })}
