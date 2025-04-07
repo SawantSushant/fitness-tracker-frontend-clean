@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from "./components/ui/card";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
@@ -16,28 +16,49 @@ export default function FitnessTracker() {
   const handleLogin = () => {
     if (username && password) {
       setLoggedInUser(username);
+      console.log("User logged in:", username);
       fetchWorkouts(username);
+    } else {
+      console.warn("Username and password required to log in");
     }
   };
 
   const fetchWorkouts = async (user) => {
-    const res = await fetch(`${API_BASE}/workouts?user=${user}`);
-    const data = await res.json();
-    setWorkouts(data);
+    try {
+      console.log("Fetching workouts for:", user);
+      const res = await fetch(`${API_BASE}/workouts?user=${user}`);
+      const data = await res.json();
+      console.log("Fetched workouts:", data);
+      setWorkouts(data);
+    } catch (error) {
+      console.error("Error fetching workouts:", error);
+    }
   };
 
   const handleAddWorkout = async () => {
-    if (!workout) return;
-    await fetch(`${API_BASE}/workouts`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user: loggedInUser, workout }),
-    });
-    setWorkout('');
-    fetchWorkouts(loggedInUser);
+    if (!workout || !loggedInUser) {
+      console.warn("Workout or user missing");
+      return;
+    }
+
+    console.log("Sending workout:", workout, "for user:", loggedInUser);
+
+    try {
+      await fetch(`${API_BASE}/workouts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user: loggedInUser, workout }),
+      });
+
+      setWorkout('');
+      fetchWorkouts(loggedInUser);
+    } catch (error) {
+      console.error("Error sending workout:", error);
+    }
   };
 
   const handleExportCSV = () => {
+    if (!loggedInUser) return;
     window.open(`${API_BASE}/export?user=${loggedInUser}`, '_blank');
   };
 
@@ -46,10 +67,10 @@ export default function FitnessTracker() {
       <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
         <Card className="max-w-md w-full">
           <CardContent>
-            <h1 className="text-2xl font-bold text-center">Login</h1>
+            <h1 className="text-2xl font-bold text-center mb-4">Login</h1>
             <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username" />
-            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" />
-            <Button onClick={handleLogin} className="w-full mt-2">Sign In</Button>
+            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className="mt-2" />
+            <Button onClick={handleLogin} className="w-full mt-4">Sign In</Button>
           </CardContent>
         </Card>
       </div>
