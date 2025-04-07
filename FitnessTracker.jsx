@@ -11,22 +11,20 @@ export default function FitnessTracker() {
   const [loggedInUser, setLoggedInUser] = useState(null);
 
   const [workout, setWorkout] = useState('');
-  const [workouts, setWorkouts] = useState([]); // ✅ Always initialized as an array
+  const [workouts, setWorkouts] = useState([]); // ✅ initialized safely
 
   const handleLogin = async () => {
     if (username && password) {
-      console.log("🔐 Logging in as:", username);
       setLoggedInUser(username);
-
       try {
         const res = await fetch(`${API_BASE}/workouts?user=${username}`);
         const data = await res.json();
-        console.log("📦 Workouts after login:", data);
+        console.log("📦 Fetched workouts:", data);
 
         if (Array.isArray(data)) {
           setWorkouts(data);
         } else {
-          console.warn("⚠️ Unexpected workout data format:", data);
+          console.warn("Unexpected response format:", data);
           setWorkouts([]);
         }
       } catch (err) {
@@ -39,14 +37,23 @@ export default function FitnessTracker() {
   const handleAddWorkout = async () => {
     if (!workout || !loggedInUser) return;
 
+    const newWorkout = {
+      user: loggedInUser,
+      workout,
+      duration: 30,
+      calories: 250,
+      feedback: "Felt good!",
+      date: new Date().toISOString().split('T')[0],
+    };
+
     try {
       await fetch(`${API_BASE}/workouts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user: loggedInUser, workout }),
+        body: JSON.stringify(newWorkout),
       });
       setWorkout('');
-      handleLogin(); // Refresh workouts after logging one
+      handleLogin(); // Refresh data
     } catch (err) {
       console.error("❌ Error adding workout:", err);
     }
@@ -94,7 +101,7 @@ export default function FitnessTracker() {
             {workouts.map((item, index) => (
               <li key={index} className="bg-white shadow p-4 rounded-xl">
                 <div className="font-semibold text-lg">{item.workout}</div>
-                {item.duration && <p>🕒 Duration: {item.duration} mins</p>}
+                {item.duration && <p>🕒 Duration: {item.duration} min</p>}
                 {item.calories && <p>🔥 Calories: {item.calories}</p>}
                 {item.feedback && <p>💬 Feedback: {item.feedback}</p>}
                 {item.date && <p>📅 Date: {item.date}</p>}
