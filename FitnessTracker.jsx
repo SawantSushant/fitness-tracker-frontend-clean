@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from "./components/ui/card";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
@@ -11,32 +11,33 @@ export default function FitnessTracker() {
   const [loggedInUser, setLoggedInUser] = useState(null);
 
   const [workout, setWorkout] = useState('');
-  const [workouts, setWorkouts] = useState([]);
+  const [workouts, setWorkouts] = useState([]); // ✅ Ensure it's always an array
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (username && password) {
+      console.log("🔐 Logging in as:", username);
       setLoggedInUser(username);
-      console.log("🔐 Logged in as:", username);
-      fetchWorkouts(username);
-    }
-  };
 
-  const fetchWorkouts = async (user) => {
-    try {
-      const res = await fetch(`${API_BASE}/workouts?user=${user}`);
-      const data = await res.json();
-      console.log("📦 Workouts from backend:", data);
-      setWorkouts(data);
-    } catch (err) {
-      console.error("❌ Failed to fetch workouts:", err);
+      try {
+        const res = await fetch(`${API_BASE}/workouts?user=${username}`);
+        const data = await res.json();
+        console.log("📦 Workouts after login:", data);
+
+        if (Array.isArray(data)) {
+          setWorkouts(data);
+        } else {
+          console.warn("⚠️ Unexpected workout data format:", data);
+          setWorkouts([]);
+        }
+      } catch (err) {
+        console.error("❌ Error fetching workouts:", err);
+        setWorkouts([]);
+      }
     }
   };
 
   const handleAddWorkout = async () => {
-    if (!workout || !loggedInUser) {
-      console.warn("⚠️ Workout or user missing");
-      return;
-    }
+    if (!workout || !loggedInUser) return;
 
     try {
       await fetch(`${API_BASE}/workouts`, {
@@ -45,7 +46,7 @@ export default function FitnessTracker() {
         body: JSON.stringify({ user: loggedInUser, workout }),
       });
       setWorkout('');
-      fetchWorkouts(loggedInUser);
+      handleLogin(); // 🔄 Refresh workouts after logging one
     } catch (err) {
       console.error("❌ Error adding workout:", err);
     }
@@ -76,13 +77,16 @@ export default function FitnessTracker() {
       <h1 className="text-3xl font-bold mb-4">Welcome, {loggedInUser}</h1>
 
       <div className="flex items-center space-x-2">
-        <Input value={workout} onChange={(e) => setWorkout(e.target.value)} placeholder="Enter workout details" />
+        <Input
+          value={workout}
+          onChange={(e) => setWorkout(e.target.value)}
+          placeholder="Enter workout details"
+        />
         <Button onClick={handleAddWorkout}>Add</Button>
       </div>
 
       <div>
         <h2 className="text-xl font-semibold mb-2">Your Workouts</h2>
-
         {!Array.isArray(workouts) || workouts.length === 0 ? (
           <p className="text-gray-500">No workouts logged yet.</p>
         ) : (
